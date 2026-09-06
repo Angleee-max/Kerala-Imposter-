@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Imposter Kerala — Multiplayer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#fff7e9,#eaf8f0);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#29251f}.wrap{max-width:850px;margin:auto;padding:18px}.hero{text-align:center;padding:22px 8px}.emoji{font-size:52px}.hero h1{font-size:clamp(34px,8vw,58px);margin:2px}.hero p{color:#71695f}.card{background:#fff;border:1px solid #eadfce;border-radius:22px;padding:20px;margin:14px 0;box-shadow:0 12px 35px #65491d12}.hidden{display:none!important}h2{margin-top:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.choice{padding:22px 14px;border:2px solid #e4d8c7;border-radius:18px;background:#fff;text-align:center;cursor:pointer}.choice:hover{border-color:#148253;transform:translateY(-1px)}.choice b{display:block;font-size:20px;margin-top:7px}button{border:0;border-radius:13px;padding:12px 16px;background:#0f7a4d;color:white;font-weight:800;cursor:pointer}button.secondary{background:#eee7dd;color:#2c2822}button.danger{background:#d94c4c}input,select{width:100%;padding:12px;border:1px solid #d7c9b6;border-radius:12px;background:white;font:inherit}label{font-weight:750;font-size:14px;display:block;margin:12px 0 6px}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px}.player{display:flex;gap:7px}.player input{flex:1}.pills{display:flex;gap:7px;flex-wrap:wrap}.pill{padding:9px 12px;border-radius:999px;border:1px solid #dfd2c0;cursor:pointer;background:#fff}.pill.active{background:#dff2e8;border-color:#71b793;color:#075b38}.code{font-size:36px;letter-spacing:8px;font-weight:950;text-align:center;background:#fff6d7;padding:15px;border-radius:16px}.list{padding:0;margin:12px 0;list-style:none}.list li{padding:10px;border-bottom:1px solid #eee3d4;display:flex;justify-content:space-between}.note{padding:12px;border-left:4px solid #e4a000;background:#fff6d7;border-radius:10px;font-size:14px}.reveal{min-height:220px;display:grid;place-items:center;border:2px dashed #d9c29e;background:#fbf5eb;border-radius:18px;text-align:center}.word{font-size:clamp(32px,9vw,64px);font-weight:950;padding:20px}.votegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.votegrid button{background:#fff;color:#29251f;border:2px solid #e5d9c7}.score{display:flex;justify-content:space-between;padding:11px;border-bottom:1px solid #eee3d4}.center{text-align:center}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.tag{font-size:12px;font-weight:850;background:#e6f4ed;color:#075b38;padding:6px 9px;border-radius:999px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero"><div class="emoji">🎭🌴</div><h1>Imposter Kerala</h1><p>Oru word ellarkkum… pakshe oralakku illa 😈</p></header>
+
+<section id="mode" class="card">
+<h2>How are you playing?</h2>
+<div class="grid">
+<div class="choice" onclick="chooseMode('same')">📱<b>One Phone</b><span>Pass one phone around</span></div>
+<div class="choice" onclick="chooseMode('multi')">📲<b>Separate Phones</b><span>Everyone uses their own phone</span></div>
+</div>
+</section>
+
+<section id="multi" class="card hidden">
+<h2>📲 Separate Phones</h2>
+<div class="grid">
+<div class="choice" onclick="showGenerate()">➕<b>Generate</b><span>Create a new room</span></div>
+<div class="choice" onclick="showJoin()">🔑<b>Join</b><span>Enter a room code</span></div>
+</div>
+<div id="generate" class="hidden">
+<hr><label>Your name</label><input id="hostName" placeholder="e.g. Angle">
+<label>Room code</label><div class="code" id="newCode">—</div>
+<button style="width:100%;margin-top:10px" onclick="generateRoom()">Generate Room</button>
+</div>
+<div id="join" class="hidden">
+<hr><label>Your name</label><input id="joinName" placeholder="e.g. Anu">
+<label>Room code</label><input id="joinCode" maxlength="6" placeholder="e.g. K7P4Q" style="text-transform:uppercase">
+<button style="width:100%;margin-top:10px" onclick="joinRoom()">Join Room</button>
+<p id="joinMsg" class="small"></p>
+</div>
+</section>
+
+<section id="lobby" class="card hidden">
+<div class="top"><div><span class="tag">ROOM LOBBY</span><h2 id="lobbyTitle"></h2></div><div class="code" id="lobbyCode" style="font-size:25px;padding:8px 12px"></div></div>
+<p>Share the room code with your friends. Each person opens this website, chooses <b>Separate Phones → Join</b>, and enters the code.</p>
+<ul id="lobbyPlayers" class="list"></ul>
+<div id="hostControls"></div>
+</section>
+
+<section id="setup" class="card hidden">
+<h2>Game setup</h2>
+<label>Players (4–12)</label><div id="players" class="players"></div>
+<div class="row" style="margin-top:9px"><button class="secondary" onclick="addPlayer()">＋ Add player</button><button class="secondary" onclick="removePlayer()">− Remove</button></div>
+<label>Categories</label><div id="cats" class="pills"></div>
+<label>Language</label><select id="lang"><option>Mix — English + Malayalam + Manglish</option><option>English</option><option>Malayalam</option><option>Manglish</option></select>
+<button style="width:100%;margin-top:14px" onclick="beginLocal()">🔥 Start Game</button>
+</section>
+
+<section id="reveal" class="card hidden">
+<div class="top"><div><span class="tag">PRIVATE REVEAL</span><h2 id="revealName"></h2></div><span id="roomSmall"></span></div>
+<div class="reveal"><div><p id="revealHint">Only this player should look.</p><div id="word" class="word hidden"></div><button id="revealBtn" onclick="showWord()">👀 Reveal my word</button></div></div>
+<button class="secondary" style="width:100%;margin-top:10px" onclick="nextReveal()">Hide & pass →</button>
+</section>
+
+<section id="discussion" class="card hidden center">
+<span class="tag">DISCUSSION</span><h2>🗣️ Discuss!</h2>
+<p>No timer. Take as long as you want. Give clues, question suspicious people, and defend yourself.</p>
+<button onclick="goVote()">🗳️ Everyone ready — Vote</button>
+</section>
+
+<section id="voting" class="card hidden">
+<h2>🗳️ Vote</h2><p id="votePrompt" class="note"></p><div id="voteArea" class="votegrid"></div>
+</section>
+
+<section id="results" class="card hidden center">
+<div style="font-size:52px">🎉</div><h2 id="resultTitle"></h2><p id="resultText"></p><div id="scores"></div>
+<button style="margin-top:14px" onclick="location.reload()">🏠 New Game</button>
+</section>
+
+<footer>Imposter Kerala • No timer • Room-code multiplayer flow</footer>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+const packs={
+"🍛 Kerala Food":["Porotta","Pazhampori","Appam","Puttu","Kappa","Beef roast","Sadhya","Biriyani","Unniyappam","Chatti pathiri","Kozhukkatta","Karimeen pollichathu"],
+"🎬 Latest Movies":["Aavesham","Manjummel Boys","Premalu","Bramayugam","ARM","Turbo","Aadujeevitham","Thudarum","Lokah","Neru"],
+"📍 Kerala Places":["Kochi","Munnar","Alappuzha","Varkala","Wayanad","Fort Kochi","Vagamon","Kovalam","Thrissur","Kozhikode","Kannur","Kuttanad"],
+"😂 Funny Kerala":["Poovalan","Kozhi","Vazha","Kunjuvava","Shuttunani","Ammavan","Chekkan","Pennu","Naadan","Show off","Chali","Adipoli"],
+"🧸 Things":["Pillow","Pen","Umbrella","Charger","Helmet","Bottle","Fan","Mundu","Bag","Comb","Bucket","Remote"],
+"📚 CA Foundation":["Journal","Ledger","Trial Balance","Balance Sheet","Consideration","Offer","Acceptance","Elasticity","Demand","Partnership","Depreciation","Capital Expenditure"],
+"🗣️ Malayalam / Manglish":["Sheda","Aiyyo","Enthuvaade","Pwoli","Ithenth mone","Nalla rasam","Enthokkeyundu","Pani paali","Njan illa","Kidu","Chumma","Ayye"],
+"⭐ Celebrities":["Mohanlal","Mammootty","Fahadh Faasil","Nazriya","Dulquer Salmaan","Prithviraj","Parvathy","Basil Joseph","Soubin Shahir","Kalyani Priyadarshan"],
+"🔥 Trends":["POV","GRWM","Aura","Delulu","Rizz","Brainrot","Main character","Reel","Streak","Viral challenge","Core memory","Slay"]};
+let mode='',players=[],cats=Object.keys(packs),revealIndex=0,secret='',imp=-1,votes={},voter=0,room='',isHost=false;
+let peer=null, hostConn=null, conns={}, myId='', myPlayerIndex=-1, gameStarted=false, myWord='', myImposter=false;
+
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+
+function chooseMode(m){
+  mode=m;
+  $('mode').classList.add('hidden');
+  if(m==='same'){
+    $('setup').classList.remove('hidden'); initPlayers();
+  }else $('multi').classList.remove('hidden');
+}
+
+function initPlayers(){
+  if(players.length)return;
+  for(let i=1;i<=4;i++)players.push('Player '+i);
+  renderPlayers(); renderCats();
+}
+function renderPlayers(){
+  $('players').innerHTML=players.map((p,i)=>`<div class="player"><input value="${esc(p)}" oninput="players[${i}]=this.value"><button class="danger" onclick="delP(${i})">×</button></div>`).join('')
+}
+function addPlayer(){if(players.length<12){players.push('Player '+(players.length+1));renderPlayers()}}
+function removePlayer(){if(players.length>4){players.pop();renderPlayers()}}
+function delP(i){if(players.length>4){players.splice(i,1);renderPlayers()}}
+function renderCats(){$('cats').innerHTML=Object.keys(packs).map(c=>`<span class="pill ${cats.includes(c)?'active':''}" onclick="this.classList.toggle('active');toggleC('${c}',this)">${c}</span>`).join('')}
+function toggleC(c,e){cats=e.classList.contains('active')?[...new Set([...cats,c])]:cats.filter(x=>x!==c)}
+function showGenerate(){$('generate').classList.remove('hidden');$('join').classList.add('hidden')}
+function showJoin(){$('join').classList.remove('hidden');$('generate').classList.add('hidden')}
+function code(){return Math.random().toString(36).slice(2,7).toUpperCase()}
+
+function generateRoom(){
+  const n=$('hostName').value.trim();
+  if(!n)return alert('Enter your name.');
+  room=code(); isHost=true; players=[n]; myPlayerIndex=0;
+  $('newCode').textContent=room;
+  startPeerHost(n);
+}
+function joinRoom(){
+  const n=$('joinName').value.trim(), c=$('joinCode').value.trim().toUpperCase();
+  if(!n||c.length<4)return alert('Enter your name and a valid room code.');
+  room=c; isHost=false; players=[]; myPlayerIndex=-1;
+  startPeerJoin(n,c);
+}
+
+function openLobby(){
+  $('multi').classList.add('hidden'); $('lobby').classList.remove('hidden');
+  $('lobbyCode').textContent=room;
+  $('lobbyTitle').textContent=isHost?'You created the room':'You joined the room';
+  renderLobby();
+}
+
+function renderLobby(){
+  $('lobbyPlayers').innerHTML=players.length
+    ? players.map((p,i)=>`<li><span>${esc(p)}</span><b>${i===0?'HOST':''}</b></li>`).join('')
+    : '<li><span>Connecting…</span></li>';
+
+  if(isHost){
+    const enough=players.length>=4;
+    $('hostControls').innerHTML=
+      `<div class="note"><b>${players.length}/12 players</b> — ${
+        enough ? 'Everyone is ready. You can start the game.' : `Waiting for ${4-players.length} more player${4-players.length===1?'':'s'} to join…`
+      }</div>
+      <button style="width:100%;margin-top:10px" onclick="openMultiSetup()">⚙️ Game settings</button>
+      <button style="width:100%;margin-top:10px" ${enough?'':'disabled'} onclick="startOnlineGame()">🔥 Start Game</button>`;
+  }else{
+    $('hostControls').innerHTML=
+      `<div class="note"><b>${players.length}/12 players</b><br>Waiting for the host to start the game…</div>`;
+  }
+}
+
+function openMultiSetup(){
+  $('lobby').classList.add('hidden');
+  $('setup').classList.remove('hidden');
+  // Do not replace the real online player list.
+  $('players').innerHTML=players.map(p=>`<div class="player"><input value="${esc(p)}" disabled></div>`).join('');
+  renderCats();
+  $('setup').querySelector('h2').textContent='Online game settings';
+  $('setup').querySelector('.row').style.display='none';
+  $('setup button[onclick="beginLocal()"]').textContent='🔥 Save & Return to Lobby';
+  $('setup button[onclick="beginLocal()"]').onclick=saveOnlineSettings;
+}
+function saveOnlineSettings(){
+  if(!cats.length)return alert('Select at least one category.');
+  $('setup').classList.add('hidden'); $('lobby').classList.remove('hidden');
+  renderLobby();
+}
+function setupMulti(){openMultiSetup()}
+
+function startPeerHost(name){
+  peer=new Peer(room,{debug:1});
+  peer.on('open',()=>{openLobby(); renderLobby();});
+  peer.on('connection',conn=>{
+    conn.on('open',()=>{
+      conns[conn.peer]=conn;
+      conn.on('data',data=>handleHostData(conn,data));
+      conn.on('close',()=>{removeHostPlayer(conn.peer)});
+      conn.on('error',()=>{removeHostPlayer(conn.peer)});
+      conn.send({type:'welcome',room});
+    });
+  });
+  peer.on('error',e=>{
+    if(e.type==='unavailable-id') alert('That room code is already in use. Please generate a new room.');
+    else alert('Could not create the room. Check your internet connection and try again.');
+  });
+}
+function startPeerJoin(name,c){
+  peer=new Peer({debug:1});
+  peer.on('open',()=>{
+    hostConn=peer.connect(c,{reliable:true});
+    hostConn.on('open',()=>{
+      hostConn.send({type:'join',name});
+    });
+    hostConn.on('data',handleClientData);
+    hostConn.on('close',()=>alert('The host left the room.'));
+    hostConn.on('error',()=>alert('Could not connect to the host.'));
+  });
+  peer.on('error',e=>{
+    if(e.type==='peer-unavailable') alert('Room not found. Check the code and try again.');
+    else alert('Could not join the room. Check your internet connection.');
+  });
+}
+function handleHostData(conn,data){
+  if(data.type==='join'){
+    const name=String(data.name||'').trim();
+    if(!name || players.length>=12)return;
+    // Prevent duplicate names in the same room.
+    let finalName=name, n=2;
+    while(players.includes(finalName)){finalName=name+' '+n++;}
+    players.push(finalName);
+    conns[conn.peer]=conn;
+    conn.playerIndex=players.length-1;
+    conn.playerName=finalName;
+    conn.send({type:'joined',index:conn.playerIndex,name:finalName,players:[...players]});
+    broadcastLobby();
+  }else if(data.type==='vote'){
+    if(!gameStarted)return;
+    votes[data.target]=(votes[data.target]||0)+1;
+    voter++;
+    if(voter>=players.length)finishOnlineResults();
+  }
+}
+function removeHostPlayer(peerId){
+  const conn=conns[peerId];
+  if(!conn)return;
+  const idx=conn.playerIndex;
+  delete conns[peerId];
+  if(idx==null)return;
+  players.splice(idx,1);
+  Object.values(conns).forEach(c=>{if(c.playerIndex>idx)c.playerIndex--;});
+  if(myPlayerIndex>idx)myPlayerIndex--;
+  broadcastLobby();
+}
+function broadcastLobby(){
+  Object.values(conns).forEach(c=>c.send({type:'lobby',players}));
+  renderLobby();
+}
+function handleClientData(data){
+  if(data.type==='joined'){
+    myPlayerIndex=data.index;
+    players=data.players||[];
+    openLobby(); renderLobby();
+  }else if(data.type==='lobby'){
+    players=data.players||[];
+    if($('lobby').classList.contains('hidden') && !gameStarted){
+      $('setup').classList.add('hidden'); $('lobby').classList.remove('hidden');
+    }
+    renderLobby();
+  }else if(data.type==='start'){
+    gameStarted=true;
+    players=data.players||[];
+    myPlayerIndex=data.index;
+    myWord=data.word;
+    myImposter=!!data.imposter;
+    openOnlineReveal();
+  }else if(data.type==='discussion'){
+    $('reveal').classList.add('hidden'); $('discussion').classList.remove('hidden');
+  }else if(data.type==='results'){
+    players=data.players||players; votes=data.votes||{};
+    showOnlineResults(data);
+  }
+}
+
+function startOnlineGame(){
+  if(!isHost)return;
+  if(players.length<4)return; // Never fall back to One Phone.
+  if(!cats.length)return alert('Select at least one category.');
+  const pool=cats.flatMap(c=>packs[c]);
+  secret=pool[Math.floor(Math.random()*pool.length)];
+  imp=Math.floor(Math.random()*players.length);
+  votes={}; voter=0; gameStarted=true;
+  // Host receives only their own secret. The imposter receives no secret.
+  myPlayerIndex=0;
+  myImposter=imp===0;
+  myWord=myImposter?'':secret;
+
+  Object.values(conns).forEach(conn=>{
+    const idx=conn.playerIndex;
+    conn.send({
+      type:'start',
+      players,
+      index:idx,
+      imposter:idx===imp,
+      word:idx===imp?'':secret
+    });
+  });
+  openOnlineReveal();
+}
+
+function openOnlineReveal(){
+  $('setup').classList.add('hidden');
+  $('lobby').classList.add('hidden');
+  $('discussion').classList.add('hidden');
+  $('voting').classList.add('hidden');
+  $('results').classList.add('hidden');
+  $('reveal').classList.remove('hidden');
+  $('revealName').textContent=players[myPlayerIndex]||'You';
+  $('word').classList.add('hidden');
+  $('revealBtn').classList.remove('hidden');
+  $('revealHint').textContent='Only you should look.';
+  $('roomSmall').textContent='Room '+room;
+}
+
+function showWord(){
+  if(mode==='multi'){
+    $('word').textContent=myImposter?'YOU ARE THE IMPOSTER 😈':myWord;
+    $('word').classList.remove('hidden');
+    $('revealBtn').classList.add('hidden');
+    $('revealHint').textContent=myImposter?'Blend in. Do not get caught!':'Remember your word. Do not show anyone.';
+    return;
+  }
+  $('word').textContent=revealIndex===imp?'YOU ARE THE IMPOSTER 😈':secret;
+  $('word').classList.remove('hidden');
+  $('revealBtn').classList.add('hidden');
+  $('revealHint').textContent=revealIndex===imp?'Blend in. Do not get caught!':'Remember your word. Do not show anyone.';
+}
+
+function nextReveal(){
+  if(mode==='multi'){
+    $('reveal').classList.add('hidden');
+    if(isHost){
+      $('discussion').classList.remove('hidden');
+    }else{
+      $('discussion').classList.remove('hidden');
+    }
+    return;
+  }
+  revealIndex++;
+  if(revealIndex<players.length)prepare();
+  else{$('reveal').classList.add('hidden');$('discussion').classList.remove('hidden')}
+}
+
+function goVote(){
+  if(mode==='multi'){
+    if(isHost){
+      Object.values(conns).forEach(c=>c.send({type:'discussion'}));
+      $('discussion').classList.add('hidden');
+      $('voting').classList.remove('hidden');
+      renderOnlineVote();
+    }else{
+      $('discussion').classList.add('hidden');
+      $('voting').classList.remove('hidden');
+      renderOnlineVote();
+    }
+    return;
+  }
+  votes={};voter=0;$('discussion').classList.add('hidden');$('voting').classList.remove('hidden');renderVote()
+}
+function renderOnlineVote(){
+  $('votePrompt').innerHTML=`<b>${esc(players[myPlayerIndex])}</b>, choose who you think is the imposter.`;
+  $('voteArea').innerHTML=players.map((p,i)=>`<button onclick="castOnlineVote(${i},this)">${esc(p)}</button>`).join('');
+}
+function castOnlineVote(i,btn){
+  [...$('voteArea').querySelectorAll('button')].forEach(b=>b.disabled=true);
+  btn.textContent='✓ Vote submitted';
+  if(isHost){
+    votes[i]=(votes[i]||0)+1; voter++;
+    if(voter>=players.length)finishOnlineResults();
+  }else if(hostConn){
+    hostConn.send({type:'vote',target:i});
+  }
+}
+function finishOnlineResults(){
+  const max=Math.max(...Object.values(votes),0);
+  const top=Object.keys(votes).filter(i=>votes[i]===max).map(Number);
+  const caught=top.includes(imp);
+  const data={type:'results',players,votes,imposterName:players[imp],secret,top,caught};
+  Object.values(conns).forEach(c=>c.send(data));
+  showOnlineResults(data);
+}
+function showOnlineResults(data){
+  $('voting').classList.add('hidden');
+  $('discussion').classList.add('hidden');
+  $('results').classList.remove('hidden');
+  $('resultTitle').textContent=data.caught?'IMPOSTER CAUGHT! 🕵️':'IMPOSTER ESCAPED! 😈';
+  $('resultText').innerHTML='The imposter was <b>'+esc(data.imposterName)+'</b>.<br>Secret word: <b>'+esc(data.secret)+'</b><br>Most votes: '+(data.top.length?data.top.map(i=>esc(data.players[i])).join(', '):'No votes');
+  $('scores').innerHTML=data.players.map((p,i)=>`<div class="score"><span>${esc(p)}</span><b>${data.votes[i]||0} vote${(data.votes[i]||0)==1?'':'s'}</b></div>`).join('');
+}
+
+function beginLocal(){
+  players=players.map((p,i)=>p.trim()||'Player '+(i+1));
+  if(players.length<4)return alert('Need at least 4 players.');
+  if(!cats.length)return alert('Select a category.');
+  startRound();
+}
+function startRound(){
+  const pool=cats.flatMap(c=>packs[c]);
+  secret=pool[Math.floor(Math.random()*pool.length)];
+  imp=Math.floor(Math.random()*players.length); revealIndex=0;
+  $('setup').classList.add('hidden');$('discussion').classList.add('hidden');$('reveal').classList.remove('hidden');prepare();
+}
+function prepare(){$('revealName').textContent=players[revealIndex];$('word').classList.add('hidden');$('revealBtn').classList.remove('hidden');$('revealHint').textContent='Only this player should look.'}
+function renderVote(){if(voter>=players.length)return results();$('votePrompt').innerHTML='<b>'+esc(players[voter])+'</b>, choose who you think is the imposter, then pass the phone.';$('voteArea').innerHTML=players.map((p,i)=>`<button onclick="vote(${i})">${esc(p)}</button>`).join('')}
+function vote(i){votes[i]=(votes[i]||0)+1;voter++;renderVote()}
+function results(){let max=Math.max(...Object.values(votes),0),top=Object.keys(votes).filter(i=>votes[i]===max).map(Number);let caught=top.includes(imp);$('voting').classList.add('hidden');$('results').classList.remove('hidden');$('resultTitle').textContent=caught?'IMPOSTER CAUGHT! 🕵️':'IMPOSTER ESCAPED! 😈';$('resultText').innerHTML='The imposter was <b>'+esc(players[imp])+'</b>.<br>Secret word: <b>'+esc(secret)+'</b><br>Most votes: '+(top.length?top.map(i=>esc(players[i])).join(', '):'No votes');$('scores').innerHTML=players.map((p,i)=>`<div class="score"><span>${esc(p)}</span><b>${votes[i]||0} vote${(votes[i]||0)==1?'':'s'}</b></div>`).join('')}
+
+</script>
+</body>
+</html>
